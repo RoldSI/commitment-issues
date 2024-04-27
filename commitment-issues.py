@@ -18,8 +18,8 @@ def main():
     args.add_argument('--segmentation_type', type=str, required=True, choices=["onnx"], default=segmentation_type, help="Choose segmentation type:\nOptions are:\n- onnx")
     args.add_argument('--segmentation_model_path', type=str, default=segmentation_model_path, help="Path to the ONNX model file.\n(optional to overwrite default)")
     args.add_argument('--image_path', type=str, default=image_path, help="Path to the input image.\nDisables live video feed for testing")
-    args.add_argument('--live', action='store_true', help="set to true")
-    args.add_argument('--verbose', type=bool, default=live, help="enable status/debug output")
+    args.add_argument('--live', action='store_true', help="setting to true uses the life")
+    args.add_argument('--verbose', type=bool, default=live, help="enable status/debug output (always on for now)")
     args = args.parse_args()
 
     print("starting COMMITMENT ISSUES pipeline")
@@ -28,11 +28,13 @@ def main():
     start_time = time.time()
     while True:
         # OBTAINING IMAGE
-        if(args.image_path):
+        if(live):
+            image = fetch_image()
+        elif(args.image_path):
             print(args.image_path)
             image = cv2.imread(args.image_path)
         else:
-            image = fetch_image()
+            image = cv2.imread('/home/maja/Projects/ZEISS/6.jpeg')
         
         # SEGMENTATION
         if(args.segmentation_type=='onnx'):
