@@ -1,24 +1,27 @@
+#! /usr/bin/env python3
+
 import argparse
 import cv2
 import onnxruntime as ort
 import numpy as np
+import sys
 
 
-model_path = 'models/iris_semseg_upp_scse_mobilenetv2.onnx'
-image_path = '/home/maja/Projects/ZEISS/6.jpeg'
+# model_path = 'models/iris_semseg_upp_scse_mobilenetv2.onnx'
+# image_path = '/home/maja/Projects/ZEISS/6.jpeg'
 
-def main():
-    args = argparse.ArgumentParser()
-    args.add_argument('--model_path', type=str, default=model_path, help='Path to the ONNX model file')
-    args.add_argument('--image_path', type=str, default=image_path, help='Path to the input image')
-    args = args.parse_args()
+def model(image, model_path='./models/iris_semseg_upp_scse_mobilenetv2.onnx'):
+    # args = argparse.ArgumentParser()
+    # args.add_argument('--model_path', type=str, default=model_path, help='Path to the ONNX model file')
+    # args.add_argument('--image_path', type=str, default=image_path, help='Path to the input image')
+    # args = args.parse_args()
 
-    image_pth = args.image_path
+    # image_pth = args.image_path
     
-    ort_session = ort.InferenceSession(args.model_path)
+    ort_session = ort.InferenceSession(model_path)
 
     # Load the image
-    image = cv2.imread(image_pth)
+    # image = cv2.imread(image_pth)
     # to grayscale
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     # to rgb  
@@ -58,4 +61,5 @@ def main():
     # ...
 
 if __name__ == '__main__':
-    main()
+    print("THIS IS NOT SUPPOSED TO BE AN ENTRYPOINT!")
+    sys.exit(1)
