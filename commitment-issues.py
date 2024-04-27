@@ -34,7 +34,7 @@ def main():
             print(args.image_path)
             image = cv2.imread(args.image_path)
         else:
-            image = cv2.imread('/home/maja/Projects/ZEISS/6.jpeg')
+            image = cv2.imread('./test-images/6.jpeg')
         
         # SEGMENTATION
         if(args.segmentation_type=='onnx'):
