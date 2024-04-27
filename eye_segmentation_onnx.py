@@ -11,7 +11,7 @@ image_path = '/home/maja/Projects/ZEISS/6.jpeg'
 
 def main():
     args = argparse.ArgumentParser()
-    args.add_argument('--model', type=str, default=model_path, help='Path to the ONNX model file')
+    args.add_argument('--model_path', type=str, default=model_path, help='Path to the ONNX model file')
     args.add_argument('--image_path', type=str, default=image_path, help='Path to the input image')
     args = args.parse_args()
 
