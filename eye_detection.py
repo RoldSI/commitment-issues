@@ -2,9 +2,19 @@ import os
 import glob
 import cv2
 import numpy as np
+from pupil_detectors import Detector2D
+from pye3d.detector_3d import CameraModel, Detector3D, DetectorMode
+
+# Initialize the 2D and 3D detectors
+detector_2d = Detector2D()
+camera = CameraModel(focal_length=561.5, resolution=[400, 400])
+detector_3d = Detector3D(camera=camera, long_term_mode=DetectorMode.blocking)
 
 # Function to preprocess the image
 def preprocess_image(image):
+    if image is None:
+        raise ValueError("Input image is None")
+
     # Convert to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
@@ -15,18 +25,14 @@ def preprocess_image(image):
 
 # Function to detect the pupil and return its position
 def detect_pupil(image):
-    # Preprocess the image
     preprocessed = preprocess_image(image)
 
-    # Use adaptive thresholding to isolate dark regions (pupil)
     thresholded = cv2.adaptiveThreshold(
         preprocessed, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2
     )
 
-    # Find contours in the thresholded image
     contours, _ = cv2.findContours(thresholded, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    # Find the largest valid contour (representing the pupil)
     largest_contour = None
     largest_area = 0
 
@@ -36,61 +42,81 @@ def detect_pupil(image):
             ellipse = cv2.fitEllipse(contour)
             center, axes, angle = ellipse
             
-            # Ensure the contour is sufficiently circular
             if axes[0] / axes[1] < 1.2:
                 largest_area = area
                 largest_contour = contour
 
-    # Explicitly check if the largest contour is valid
     if largest_contour is not None:
-        return cv2.fitEllipse(largest_contour)
-    
+        # Ensure correct structure with proper indices and default confidence
+        ellipse = cv2.fitEllipse(largest_contour)
+        return {
+            "ellipse": {
+                "center": (ellipse[0][0], ellipse[0][1]),
+                "axes": (ellipse[1][0], ellipse[1][1]),
+                "angle": ellipse[2],
+            },
+            "confidence": 1.0,  # Default confidence
+        }
+
     return None
 
-# Function to estimate gaze direction
-def estimate_gaze_direction(eye_image):
-    # Find the pupil
-    pupil = detect_pupil(eye_image)
+# Function to estimate gaze direction with pye3d
+def estimate_gaze_with_pye3d(image, frame_number, fps):
+    result_2d = detect_pupil(image)
 
-    if pupil is not None:
-        # Draw the ellipse on the eye image
-        cv2.ellipse(eye_image, pupil, (0, 255, 0), 2)
+    if result_2d is None:
+        print("Failed to detect pupil. Skipping gaze estimation.")
+        return None
 
-        # Calculate the center of the pupil
-        pupil_center = (int(pupil[0][0]), int(pupil[0][1]))
+    result_2d["timestamp"] = frame_number / fps
+    if "confidence" not in result_2d:
+        result_2d["confidence"] = 1.0  # Default confidence
 
-        # Define the center of the eye image
-        eye_center = (eye_image.shape[1] // 2, eye_image.shape[0] // 2)
+    try:
+        result_3d = detector_3d.update_and_detect(result_2d, preprocess_image(image))
+    except Exception as e:
+        print(f"Error in 3D detection: {e}")
+        return None
 
-        # Calculate gaze direction relative to the eye's center
-        gaze_direction = (pupil_center[0] - eye_center[0], eye_center[1] - pupil_center[1])
+    if "gaze_direction" not in result_3d:
+        print("3D detection failed. 'gaze_direction' not found.")
+        return None
 
-        # Draw an arrowed line to indicate gaze direction
-        cv2.arrowedLine(eye_image, eye_center, pupil_center, (255, 0, 0), 2)
+    return result_3d["gaze_direction"]
 
-        return gaze_direction
-    
-    return None
+# Process all PNG images from the 'Pictures' folder
+def process_images(image_files):
+    frame_number = 0
+    fps = 30  # Default FPS for timing calculations
 
-# Get all PNG images from the 'Pictures' folder in the current directory
+    for image_file in image_files:
+        eye_image = cv2.imread(image_file)
+
+        if eye_image is None:
+            print(f"Could not read image: {image_file}")
+            continue
+
+        # Estimate gaze direction with pye3d
+        gaze_vector = estimate_gaze_with_pye3d(eye_image, frame_number, fps)
+
+        if gaze_vector:
+            print(f"Gaze vector for {image_file}: {gaze_vector}")
+
+            # Show the image with gaze direction indication
+            cv2.imshow(f"Gaze Direction for {image_file}", eye_image)
+
+            cv2.waitKey(500)  # Display for 500 milliseconds
+
+        frame_number += 1
+
+        # Clean up OpenCV windows
+        cv2.destroyAllWindows()
+
+# Get all PNG images from the 'Pictures' folder
 image_files = glob.glob("Pictures/*.png")
 
-# Process each image and estimate gaze direction
-for image_file in image_files:
-    # Load the image
-    eye_image = cv2.imread(image_file)
-
-    # Estimate gaze direction
-    gaze_direction = estimate_gaze_direction(eye_image)
-
-    if gaze_direction is not None:
-        print(f"Gaze direction for {image_file}: {gaze_direction}")
-
-        # Show the image with gaze direction indication
-        cv2.imshow(f"Gaze Direction for {image_file}", eye_image)
-
-        # Wait for a specific time to avoid blocking
-        cv2.waitKey(500)  # Display for 500 milliseconds
-        cv2.destroyAllWindows()
-    else:
-        print(f"No pupil detected in {image_file}. Gaze direction cannot be estimated.")
+if not image_files:
+    print("No images found in the 'Pictures' folder.")
+else:
+    # Process images with pye3d
+    process_images(image_files)
