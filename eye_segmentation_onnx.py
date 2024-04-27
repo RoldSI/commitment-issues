@@ -1,3 +1,5 @@
+#! /usr/bin/env python3
+
 import argparse
 import cv2
 import onnxruntime as ort
