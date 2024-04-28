@@ -7,15 +7,14 @@
 ```
 
 
-# left bottle
+### left bottle
 difference:  [-155   -2]
 
-# center bottle
+### center bottle
 
 difference:  [-41 -23]
 
 
 left 150
-
 center -20
 right 100-107

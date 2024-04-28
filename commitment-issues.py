@@ -11,11 +11,16 @@ import sys
 import numpy as np
 from pynput import keyboard
 
+import logging
+
 
 EYE_BALL_RADIUS_PIXEL_EQUIVALENT_HOR = 246.77 # experimeted
 EYE_BALL_RADIUS_PIXEL_EQUIVALENT_VER = 213.1 # experimeted
 
+logger = logging.getLogger(__name__)
 def main():
+    logging.basicConfig(filename='eye_tracking_gaze.log', level=logging.INFO)
+    logger.info('Started')
     segmentation_type = None
     segmentation_model_path = None
     image_path = None
@@ -54,8 +59,11 @@ def main():
         else:
             image = cv2.imread('./test-images/6.jpeg')
         cv2.imshow('raw-image', image)
+        # cv2.imwrite("yahyah.jpg", image)
         print("OBTAINING IMAGE FINISHED")
         
+        # start timer
+        start_log_time = time.time()
         # SEGMENTATION
         print("SEGMENTATION")
         if(args.segmentation_type=='testo'):
@@ -110,7 +118,7 @@ def main():
             color = (0, 255, 0) 
             
             # Line thickness of 2 px 
-            thickness = 8
+            thickness = 3
             
             # iris_color_mask = cv2.
             diff_position = current_position - ground_truth_position
@@ -119,8 +127,8 @@ def main():
 
             cv2.circle(iris_color_mask, (current_position[0], current_position[1]), 10, (0, 255, 0), -1)
             goal_position = current_position+diff_position
-            goal_position[0] = 1 *goal_position[0]
-            cv2.arrowedLine(iris_color_mask, tuple(current_position), tuple(goal_position), (0, 0, 255), 2)
+            # goal_position[0] = 1 * goal_position[0]
+            cv2.arrowedLine(iris_color_mask, tuple(current_position), tuple(goal_position), (0, 0, 255), 5)
 
 
             hor_diff_angle = diff_position[0] / EYE_BALL_RADIUS_PIXEL_EQUIVALENT_HOR
@@ -130,10 +138,21 @@ def main():
             ver_diff_angle = diff_position[0] / EYE_BALL_RADIUS_PIXEL_EQUIVALENT_VER
             ver_angle = np.arctan(ver_diff_angle)
             ver_degree = np.rad2deg(ver_angle)
+            if hor_degree > 30:
+                # Using cv2.putText() method 
+                image = cv2.putText(iris_color_mask, "Warning: Moving away from the fixation target", (50, 100), font,  
+                                fontScale, (0, 0, 255), thickness, cv2.LINE_AA)
+            elif hor_degree < -18:
+                # Using cv2.putText() method 
+                image = cv2.putText(iris_color_mask, "Warning: Moving away from the fixation target", (50, 100), font,  
+                                fontScale, (0, 0, 255), thickness, cv2.LINE_AA)
+                
 
             # Using cv2.putText() method 
-            image = cv2.putText(iris_color_mask, "hor gaze angle is "+ str(hor_degree) + " and ver angle is " + str(ver_degree), org, font,  
+            image = cv2.putText(iris_color_mask, "timestamp: " + str(time.time()) + " hor gaze angle is "+ str(int(hor_degree)) + " and ver angle is " + str(int(ver_degree)), org, font,  
                             fontScale, color, thickness, cv2.LINE_AA) 
+            
+            logger.info("hor gaze angle is "+ str(int(hor_degree)) + " and ver angle is " + str(int(ver_degree)))
             print("difference: ", diff_position)
             
         else:
@@ -162,9 +181,12 @@ def main():
             ver_degree = np.rad2deg(ver_angle)
 
             # Using cv2.putText() method 
-            image = cv2.putText(iris_color_mask, "hor gaze angle is "+ str(hor_degree) + " and ver angle is " + str(ver_degree), org, font,  
-                            fontScale, color, thickness, cv2.LINE_AA) 
+            # image = cv2.putText(iris_color_mask, "hor gaze angle is "+ str(int(hor_degree)) + " and ver angle is " + str(int(ver_degree)), org, font,  
+            #                 fontScale, color, thickness, cv2.LINE_AA) 
             print("difference: ", diff_position)
+
+
+        print("latency in ms: ", time.time() - start_log_time)    
         cv2.imshow('masked-image', iris_color_mask)
         print("POSITIONING FINISHED")
 
@@ -188,6 +210,8 @@ def main():
             start_time = time.time()
             frame_counter = 0
     cv2.destroyAllWindows()
+    logger.info('Finished')
+    
 
 def on_press(key):
     # Function to handle key press

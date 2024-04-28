@@ -67,32 +67,35 @@ def testo(frame):
     # new_image = cv2.drawContours(image, contours, 0, (0, 255, 0), 2)
 
     # Calculate image moments of the detected contour
-    M = cv2.moments(contours[0])
+    # M = cv2.moments(contours[0])
 
     # Print center (debugging):
     # print("center X : '{}'".format(round(M['m10'] / M['m00'])))
     # print("center Y : '{}'".format(round(M['m01'] / M['m00'])))
 
     # Find the contour with the maximum area
-    max_contour = max(contours, key=cv2.contourArea)
+    if len(contours) != 0:
+        max_contour = max(contours, key=cv2.contourArea)
 
-    M = cv2.moments(max_contour)
-    centroid_x = int(M["m10"] / M["m00"])
-    centroid_y = int(M["m01"] / M["m00"])
-    return [image, [centroid_x, centroid_y]]
+        M = cv2.moments(max_contour)
+        centroid_x = int(M["m10"] / M["m00"])
+        centroid_y = int(M["m01"] / M["m00"])
+        return [image, [centroid_x, centroid_y]]
+    else:
+        return [image, [0, 0]]
 
-    # Draw the centroid on the original image
-    image = cv2.circle(image, (centroid_x, centroid_y), 5, (255, 0, 0), -1)
+    # # Draw the centroid on the original image
+    # image = cv2.circle(image, (centroid_x, centroid_y), 5, (255, 0, 0), -1)
 
-    # Calculate the radius of the circle
-    # radius = int(cv2.arcLength(max_contour, True) / (4 * np.pi))
-    radius = 130
-    print(radius)
+    # # Calculate the radius of the circle
+    # # radius = int(cv2.arcLength(max_contour, True) / (4 * np.pi))
+    # radius = 130
+    # print(radius)
 
-    cv2.circle(image, (centroid_x, centroid_y), radius, (0, 0, 255), 2)
+    # cv2.circle(image, (centroid_x, centroid_y), radius, (0, 0, 255), 2)
 
-    cv2.imshow("frame", image)
-    cv2.waitKey(3)
+    # cv2.imshow("frame", image)
+    # cv2.waitKey(3)
     # input("enter")
 
 # cv2.destroyAllWindows()

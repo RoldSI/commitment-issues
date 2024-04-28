@@ -15,10 +15,11 @@ def show_image(img):
 def find_pupil(image) -> np.ndarray[2,]:
     img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     # img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
-    img = cv2.normalize(img, None, 0, 1.0, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+    img = cv2.normalize(img, None, 0, 1.0, cv2.NORM_MINMAX, dtype=cv2.CV_32F)
 
     # avg_val = np.average(img)
     # img[np.where(img>avg_val*.5)] = 255
+    # img = cv2.threshold(img, np.percentile(img, 5), 255, cv2.THRESH_BINARY)[1]
     img[np.where(img>np.percentile(img, 5))] = 255
     img[np.where(img<0.3)] = 0
 
@@ -28,7 +29,10 @@ def find_pupil(image) -> np.ndarray[2,]:
     closed = cv2.morphologyEx(closed, cv2.MORPH_OPEN, kernel)
 
     _, _, stats, centroids = cv2.connectedComponentsWithStats(closed.astype(np.uint8), connectivity=4)
-    i_max = np.argsort(stats[:,cv2.CC_STAT_AREA])[-2]
+    try:
+        i_max = np.argsort(stats[:,cv2.CC_STAT_AREA])[-2]
+    except:
+        i_max = 0
     pupil_point = centroids[i_max,:]
     return [pupil_point, closed]
 
