@@ -1,0 +1,12 @@
+[package]
+name = "commitment-issues"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = { version = "4.3", features = ["derive"] }
+nalgebra = "0.32"
+opencv = "0.91.2"
+rdev = "0.5.3"
