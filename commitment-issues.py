@@ -11,6 +11,10 @@ import sys
 import numpy as np
 from pynput import keyboard
 
+
+EYE_BALL_RADIUS_PIXEL_EQUIVALENT_HOR = 246.77 # experimeted
+EYE_BALL_RADIUS_PIXEL_EQUIVALENT_VER = 213.1 # experimeted
+
 def main():
     segmentation_type = None
     segmentation_model_path = None
@@ -93,10 +97,74 @@ def main():
         # POSITIONING (TODO!!)
         print("POSITIONING")
         if setup:
-            cv2.circle(iris_color_mask, (ground_truth_position[0], ground_truth_position[1]), 5, (0, 255, 0), -1)
-            cv2.arrowedLine(iris_color_mask, tuple(ground_truth_position), tuple(current_position), (0, 0, 255), 2)
+            # font 
+            font = cv2.FONT_HERSHEY_SIMPLEX 
+            
+            # org 
+            org = (50, 50) 
+            
+            # fontScale 
+            fontScale = 1
+            
+            # Blue color in BGR 
+            color = (0, 255, 0) 
+            
+            # Line thickness of 2 px 
+            thickness = 8
+            
+            # iris_color_mask = cv2.
+            diff_position = ground_truth_position - current_position
+
+
+
+            cv2.circle(iris_color_mask, (current_position[0], current_position[1]), 10, (0, 255, 0), -1)
+            goal_position = ground_truth_position+diff_position
+            goal_position[0] = 1 *goal_position[0]
+            cv2.arrowedLine(iris_color_mask, tuple(current_position), tuple(goal_position), (0, 0, 255), 2)
+
+
+            hor_diff_angle = diff_position[0] / EYE_BALL_RADIUS_PIXEL_EQUIVALENT_HOR
+            hor_angle = np.arctan(hor_diff_angle)
+            hor_degree = np.rad2deg(hor_angle)
+
+            ver_diff_angle = diff_position[0] / EYE_BALL_RADIUS_PIXEL_EQUIVALENT_VER
+            ver_angle = np.arctan(ver_diff_angle)
+            ver_degree = np.rad2deg(ver_angle)
+
+            # Using cv2.putText() method 
+            image = cv2.putText(iris_color_mask, "hor gaze angle is "+ str(hor_degree) + " and ver angle is " + str(ver_degree), org, font,  
+                            fontScale, color, thickness, cv2.LINE_AA) 
+            print("difference: ", diff_position)
+            
         else:
-            cv2.circle(iris_color_mask, (current_position[0], current_position[1]), 5, (0, 255, 255), -1)
+            # font 
+            font = cv2.FONT_HERSHEY_SIMPLEX 
+            # org 
+            org = (50, 50) 
+            
+            # fontScale 
+            fontScale = 1
+            
+            # Blue color in BGR 
+            color = (255, 0, 0) 
+            
+            # Line thickness of 2 px 
+            thickness = 2
+            cv2.circle(iris_color_mask, (current_position[0], current_position[1]), 10, (0, 255, 255), -1)
+            # iris_color_mask = cv2.
+            diff_position = ground_truth_position - current_position
+            hor_diff_angle = diff_position[0] / EYE_BALL_RADIUS_PIXEL_EQUIVALENT_HOR
+            hor_angle = np.arctan(hor_diff_angle)
+            hor_degree = np.rad2deg(hor_angle)
+
+            ver_diff_angle = diff_position[0] / EYE_BALL_RADIUS_PIXEL_EQUIVALENT_VER
+            ver_angle = np.arctan(ver_diff_angle)
+            ver_degree = np.rad2deg(ver_angle)
+
+            # Using cv2.putText() method 
+            image = cv2.putText(iris_color_mask, "hor gaze angle is "+ str(hor_degree) + " and ver angle is " + str(ver_degree), org, font,  
+                            fontScale, color, thickness, cv2.LINE_AA) 
+            print("difference: ", diff_position)
         cv2.imshow('masked-image', iris_color_mask)
         print("POSITIONING FINISHED")
 
