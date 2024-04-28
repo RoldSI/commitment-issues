@@ -113,12 +113,12 @@ def main():
             thickness = 8
             
             # iris_color_mask = cv2.
-            diff_position = ground_truth_position - current_position
+            diff_position = current_position - ground_truth_position
 
 
 
             cv2.circle(iris_color_mask, (current_position[0], current_position[1]), 10, (0, 255, 0), -1)
-            goal_position = ground_truth_position+diff_position
+            goal_position = current_position+diff_position
             goal_position[0] = 1 *goal_position[0]
             cv2.arrowedLine(iris_color_mask, tuple(current_position), tuple(goal_position), (0, 0, 255), 2)
 
