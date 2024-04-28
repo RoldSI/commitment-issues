@@ -4,6 +4,7 @@ import argparse
 from image_api import fetch_image
 from eye_segmentation_onnx import model
 from segmentation_classical import find_pupil
+from segmentation_test import testo
 import cv2
 import time
 import sys
@@ -22,7 +23,7 @@ def main():
     current_position = [0, 0]
 
     args = argparse.ArgumentParser()
-    args.add_argument('--segmentation_type', type=str, required=True, choices=["onnx", "classic"], default=segmentation_type, help="Choose segmentation type:\nOptions are:\n- onnx")
+    args.add_argument('--segmentation_type', type=str, required=True, choices=["onnx", "classic", "testo"], default=segmentation_type, help="Choose segmentation type:\nOptions are:\n- onnx")
     args.add_argument('--segmentation_model_path', type=str, default=segmentation_model_path, help="Path to the ONNX model file.\n(optional to overwrite default)")
     args.add_argument('--image_path', type=str, default=image_path, help="Path to the input image.\nDisables live video feed for testing")
     args.add_argument('--live', action='store_true', help="setting to true uses the life")
@@ -53,7 +54,13 @@ def main():
         
         # SEGMENTATION
         print("SEGMENTATION")
-        if(args.segmentation_type=='classic'):
+        if(args.segmentation_type=='testo'):
+            [iris_mask, current_position] = testo(image)
+            current_position = np.array(current_position)
+            iris_mask = image
+            iris_color_mask = iris_mask
+            # iris_color_mask = cv2.cvtColor(iris_mask, cv2.COLOR_GRAY2BGR)
+        elif(args.segmentation_type=='classic'):
             [centroid, iris_mask] = find_pupil(image)
             current_position = centroid.flatten().astype(int)
             print(f"current_position: {current_position}")
@@ -74,7 +81,7 @@ def main():
 
         # IRIS POSITIONING
         print("IRIS POSITIONING")
-        if not args.segmentation_type=='classic':
+        if not args.segmentation_type=='classic' and not args.segmentation_type=='testo':
             if white_pixel_coords is None:
                 print("NO DETECTION! REPOSITION PLEASE!")
                 continue
